@@ -1,0 +1,45 @@
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/Ba"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/gradient"
+    tools:context=".MainActivity2">
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="193dp"
+        android:layout_height="184dp"
+        android:fontFamily="@font/raleway_black"
+        android:gravity="center"
+        android:text="Добро пожаловать"
+        android:textColor="#ECECEC"
+        android:textSize="30sp"
+        tools:layout_editor_absoluteX="118dp"
+        tools:layout_editor_absoluteY="57dp"
+        tools:ignore="MissingConstraints" />
+
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="327dp"
+        android:layout_height="646dp"
+        android:layout_centerInParent="true"
+        app:srcCompat="@drawable/remove_bg_ai_1716018722265"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="50dp"
+        tools:layout_editor_absoluteY="57dp" />
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="335dp"
+        android:layout_height="70dp"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/rounded_button"
+        android:text="Начать"
+        tools:layout_editor_absoluteX="42dp"
+        tools:layout_editor_absoluteY="560dp"
+        tools:ignore="MissingConstraints" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
