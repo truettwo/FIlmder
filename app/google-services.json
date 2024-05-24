@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "381348568154",
+    "project_id": "filmder-38e81",
+    "storage_bucket": "filmder-38e81.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:381348568154:android:ed5ba73be71a1a0f2acc63",
+        "android_client_info": {
+          "package_name": "com.example.vv1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyClqTgJ7ZBykdKA7aIw8iaKQY6bjdTsi9s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

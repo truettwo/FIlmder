@@ -18,7 +18,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            Intent intent = new Intent(this, MainActivity2.class);
+            Intent intent = new Intent(this, MainActivity3.class);
             startActivity(intent);
             return true;
         }
