@@ -1,12 +1,8 @@
-package com.example.vv1.model;
-
-import com.example.vv1.model.Movie;
-import com.google.gson.annotations.SerializedName;
+package com.example.vv1;
 
 import java.util.List;
 
 public class MovieResponse {
-    @SerializedName("results")
     private List<Movie> results;
 
     public List<Movie> getResults() {

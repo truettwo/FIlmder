@@ -2,87 +2,59 @@ package com.example.vv1;
 
 import android.os.Bundle;
 import android.util.Log;
-
-import androidx.annotation.NonNull;
+import android.widget.ImageView;
+import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.ItemTouchHelper;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-
-import com.example.vv1.api.ApiClient;
-import com.example.vv1.api.ApiService;
-import com.example.vv1.model.Movie;
-import com.example.vv1.model.MovieResponse;
-
-import java.util.ArrayList;
-import java.util.List;
-
+import com.squareup.picasso.Picasso;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MainActivity4 extends AppCompatActivity {
 
-    private static final String API_KEY = "6cca2127ce122aa9be379c2a829a6f6f";
-    private RecyclerView recyclerView;
-    private MovieAdapter adapter;
-    private List<Movie> movieList;
+    private TextView titleTextView;
+    private TextView descriptionTextView;
+    private ImageView posterImageView;
+    private TextView ratingTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main4);
 
-        recyclerView = findViewById(R.id.recyclerView);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        titleTextView = findViewById(R.id.title);
+        descriptionTextView = findViewById(R.id.description);
+        posterImageView = findViewById(R.id.image);
+        ratingTextView = findViewById(R.id.rating);
 
-        movieList = new ArrayList<>();
-        adapter = new MovieAdapter(this, movieList);
-        recyclerView.setAdapter(adapter);
+        TMDBService service = ApiClient.getClient().create(TMDBService.class);
+        Call<MovieResponse> call = service.getPopularMovies("ваш_api_ключ");
 
-        // Настройка свайпов
-        ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
-            @Override
-            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
-                return false;
-            }
-
-            @Override
-            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                int position = viewHolder.getAdapterPosition();
-                if (direction == ItemTouchHelper.LEFT) {
-                    // Обработка свайпа влево
-                } else if (direction == ItemTouchHelper.RIGHT) {
-                    // Обработка свайпа вправо
-                }
-                movieList.remove(position);
-                adapter.notifyItemRemoved(position);
-            }
-        };
-
-        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
-        itemTouchHelper.attachToRecyclerView(recyclerView);
-
-        // Загрузка данных о фильмах
-        loadMovies();
-    }
-
-    private void loadMovies() {
-        ApiService apiService = ApiClient.getClient().create(ApiService.class);
-        Call<MovieResponse> call = apiService.getPopularMovies(API_KEY, "en-US", 1);
         call.enqueue(new Callback<MovieResponse>() {
             @Override
             public void onResponse(Call<MovieResponse> call, Response<MovieResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    movieList.addAll(response.body().getResults());
-                    adapter.notifyDataSetChanged();
+                    Movie movie = response.body().getResults().get(0);  // Получаем первый фильм из списка
+                    titleTextView.setText(movie.getTitle());
+                    descriptionTextView.setText(movie.getOverview());
+                    ratingTextView.setText(String.valueOf(movie.getVoteAverage()));
+
+                    // Загрузка изображения постера
+                    String posterUrl = "https://image.tmdb.org/t/p/w500" + movie.getPosterPath();
+                    Picasso.get().load(posterUrl).into(posterImageView);
+
+                    Log.d("API Response", "Title: " + movie.getTitle());
+                    Log.d("API Response", "Overview: " + movie.getOverview());
+                    Log.d("API Response", "Vote Average: " + movie.getVoteAverage());
+                    Log.d("API Response", "Poster Path: " + movie.getPosterPath());
+                } else {
+                    Log.e("API Error", "Response not successful or body is null");
                 }
             }
 
             @Override
             public void onFailure(Call<MovieResponse> call, Throwable t) {
-                Log.e("MainActivity", "Error fetching movies: " + t.getMessage());
+                Log.e("API Failure", t.getMessage(), t);
             }
         });
     }
