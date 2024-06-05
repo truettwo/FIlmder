@@ -1,24 +1,34 @@
 package com.example.vv1;
 
+import com.google.gson.annotations.SerializedName;
+import java.util.List;
+
 public class Movie {
+    @SerializedName("Title")
     private String title;
-    private String overview;
-    private double vote_average;
-    private String poster_path;
+
+    @SerializedName("Year")
+    private String year;
+
+    @SerializedName("Poster")
+    private String poster;
+
+    @SerializedName("imdbID")
+    private String imdbID;
 
     public String getTitle() {
         return title;
     }
 
-    public String getOverview() {
-        return overview;
+    public String getYear() {
+        return year;
     }
 
-    public double getVoteAverage() {
-        return vote_average;
+    public String getPoster() {
+        return poster;
     }
 
-    public String getPosterPath() {
-        return poster_path;
+    public String getImdbID() {
+        return imdbID;
     }
 }
