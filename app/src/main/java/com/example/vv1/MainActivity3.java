@@ -10,6 +10,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -52,6 +53,7 @@ public class MainActivity3 extends AppCompatActivity {
         codeEditText = findViewById(R.id.codeEditText);
         Button generateButton = findViewById(R.id.generateButton);
         Button checkButton = findViewById(R.id.checkButton);
+        Button watchAloneButton = findViewById(R.id.watchAloneButton);
 
         generateButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -67,6 +69,13 @@ public class MainActivity3 extends AppCompatActivity {
             }
         });
 
+        watchAloneButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                switchToMainActivity4();
+            }
+        });
+
         // Добавляем слушателя для обработки добавления новых кодов в базу данных
         mDatabase.child("codes").addChildEventListener(new ChildEventListener() {
             @Override
@@ -75,6 +84,7 @@ public class MainActivity3 extends AppCompatActivity {
                 String enteredCode = codeEditText.getText().toString();
                 if (enteredCode.equals(newCode)) {
                     logTextView.append("Connected\n");
+                    switchToMainActivity4();
                 }
             }
 
@@ -105,7 +115,7 @@ public class MainActivity3 extends AppCompatActivity {
 
     private void checkCode() {
         final String enteredCode = codeEditText.getText().toString();
-        mDatabase.child("codes").addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
+        mDatabase.child("codes").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 boolean connected = false;
@@ -118,6 +128,7 @@ public class MainActivity3 extends AppCompatActivity {
                 }
                 if (connected) {
                     logTextView.append("Connected\n");
+                    switchToMainActivity4();
                 } else {
                     logTextView.append("Incorrect code\n");
                 }
@@ -128,5 +139,10 @@ public class MainActivity3 extends AppCompatActivity {
                 Log.w(TAG, "checkCode:onCancelled", databaseError.toException());
             }
         });
+    }
+
+    private void switchToMainActivity4() {
+        Intent intent = new Intent(MainActivity3.this, MainActivity4.class);
+        startActivity(intent);
     }
 }

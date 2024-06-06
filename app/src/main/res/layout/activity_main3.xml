@@ -10,20 +10,22 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
+
         android:gravity="center_horizontal">
 
         <EditText
             android:id="@+id/codeEditText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:hint="Enter code" />
+            android:hint="Проверить код" />
+
 
         <Button
             android:id="@+id/generateButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="Generate Code" />
+            android:text="Сгенерировать код" />
 
         <Button
             android:id="@+id/checkButton"
@@ -38,6 +40,20 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:scrollbars="vertical" />
+
+        <Button
+            android:id="@+id/watchAloneButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            android:backgroundTint="#32CD32"
+            android:text="Я смотрю один"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/codeEditText" />
+
 
     </LinearLayout>
 
