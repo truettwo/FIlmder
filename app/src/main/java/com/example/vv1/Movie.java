@@ -4,6 +4,9 @@ import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
 public class Movie {
+
+
+
     @SerializedName("Title")
     private String title;
 

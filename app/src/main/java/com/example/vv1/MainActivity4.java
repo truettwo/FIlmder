@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -63,53 +64,43 @@ public class MainActivity4 extends AppCompatActivity {
         buttonNo.setEnabled(false);
         buttonYes.setEnabled(false);
 
-        initializeMovies();
+        fetchPopularMovies();
 
         buttonNo.setOnClickListener(v -> onDislike());
         buttonYes.setOnClickListener(v -> onLike());
         buttonThatsIt.setOnClickListener(v -> showCurrentMovieDetails());
     }
 
-    private void initializeMovies() {
-        movies = new ArrayList<>();
-        String[] movieTitles = {
-                "The Shawshank Redemption", "The Godfather", "The Dark Knight", "12 Angry Men", "Schindler's List",
-                "Pulp Fiction", "Fight Club", "Forrest Gump", "Inception", "The Matrix", "Goodfellas", "Se7en", "Seven Samurai",
-                "Star Wars: Episode V - The Empire Strikes Back", "Mad Max: Fury Road", "Black Swan", "Taxi Driver", "Amelie",
-                "Life Is Beautiful", "American History X", "One Flew Over the Cuckoo's Nest", "The Shining", "Interstellar",
-                "Saving Private Ryan", "The Green Mile", "Leon", "Reservoir Dogs", "Titanic", "Gone with the Wind", "Casablanca",
-                "Rocky", "Terminator 2: Judgment Day", "Braveheart", "Gladiator", "The Lord of the Rings: The Return of the King",
-                "The Big Lebowski", "No Country for Old Men", "The Pianist", "Eternal Sunshine of the Spotless Mind", "Shutter Island",
-                "Django Unchained", "Gran Torino", "Slumdog Millionaire", "Fight Club", "Hachiko: A Dog's Story", "The Prestige",
-                "WALL·E", "The Good, the Bad and the Ugly", "Pirates of the Caribbean: The Curse of the Black Pearl", "The Hobbit: An Unexpected Journey",
-                "The Hobbit: The Desolation of Smaug", "The Hobbit: The Battle of the Five Armies", "Avatar", "Titanic", "Watchmen",
-                "300", "Troy", "Blade Runner", "Blade Runner 2049", "Raiders of the Lost Ark", "Indiana Jones and the Last Crusade",
-                "Indiana Jones and the Temple of Doom", "Indiana Jones and the Kingdom of the Crystal Skull", "Iron Man", "Iron Man 2",
-                "Iron Man 3", "Thor", "Thor: The Dark World", "Thor: Ragnarok", "Captain America: The First Avenger",
-                "Captain America: The Winter Soldier", "Captain America: Civil War", "The Avengers", "Avengers: Age of Ultron",
-                "Avengers: Infinity War", "Avengers: Endgame", "Black Panther", "Guardians of the Galaxy", "Guardians of the Galaxy Vol. 2",
-                "Doctor Strange", "Spider-Man: Homecoming", "Spider-Man: Into the Spider-Verse", "Spider-Man: Far From Home",
-                "Spider-Man: No Way Home", "Venom", "Venom: Let There Be Carnage", "Morbius", "Shang-Chi and the Legend of the Ten Rings",
-                "Eternals", "Black Widow", "The Falcon and the Winter Soldier", "Loki", "Hawkeye", "Mission: Impossible",
-                "Mission: Impossible 2", "Mission: Impossible 3", "Mission: Impossible - Ghost Protocol", "Mission: Impossible - Rogue Nation",
-                "Mission: Impossible - Fallout", "Mission: Impossible 7"
-        };
+    private void fetchPopularMovies() {
+        omdbApi.searchMovies(apiKey, "popular").enqueue(new Callback<MovieResponse>() {
+            @Override
+            public void onResponse(Call<MovieResponse> call, Response<MovieResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    movies = response.body().getSearch();
+                    if (movies != null && !movies.isEmpty()) {
+                        showMovie(movies.get(currentIndex));
+                        // Enable buttons after movies are loaded
+                        buttonNo.setEnabled(true);
+                        buttonYes.setEnabled(true);
+                    } else {
+                        showError("No movies found.");
+                    }
+                } else {
+                    Timber.e("Response error: %s", response.errorBody());
+                    showError("Failed to fetch movies. Response error.");
+                }
+            }
 
-        for (String title : movieTitles) {
-            movies.add(new Movie(title));
-        }
-
-        if (!movies.isEmpty()) {
-            showMovie(movies.get(currentIndex));
-            buttonNo.setEnabled(true);
-            buttonYes.setEnabled(true);
-        } else {
-            showError("No movies found.");
-        }
+            @Override
+            public void onFailure(Call<MovieResponse> call, Throwable t) {
+                Timber.e(t, "Failed to fetch movies");
+                showError("Failed to fetch movies. Network error.");
+            }
+        });
     }
 
     private void showMovie(Movie movie) {
-        omdbApi.getMovieDetails(apiKey, movie.getTitle()).enqueue(new Callback<MovieDetails>() {
+        omdbApi.getMovieDetails(apiKey, movie.getImdbID()).enqueue(new Callback<MovieDetails>() {
             @Override
             public void onResponse(Call<MovieDetails> call, Response<MovieDetails> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -178,9 +169,10 @@ public class MainActivity4 extends AppCompatActivity {
             List<Movie> recommendedMovies = new ArrayList<>();
 
             for (Movie likedMovie : likedMovies) {
-                // Например, добавляем фильмы того же жанра, что и понравившийся фильм
+                // Например, добавляем фильмы того же года, что и понравившийся фильм
+                String likedYear = likedMovie.getYear();
                 for (Movie movie : movies) {
-                    if (!likedMovies.contains(movie) && !dislikedMovies.contains(movie) && movie.getTitle().contains(likedMovie.getTitle())) {
+                    if (!likedMovies.contains(movie) && !dislikedMovies.contains(movie) && movie.getYear().equals(likedYear)) {
                         recommendedMovies.add(movie);
                     }
                 }
