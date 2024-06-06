@@ -1,15 +1,8 @@
 package com.example.vv1;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.firebase.database.ChildEventListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.ValueEventListener;
-
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -18,22 +11,15 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import java.util.Random;
-import java.util.UUID;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.Random;
 
 public class MainActivity3 extends AppCompatActivity {
 
@@ -42,7 +28,7 @@ public class MainActivity3 extends AppCompatActivity {
     private TextView logTextView;
     private EditText codeEditText;
 
-
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main3);
@@ -76,26 +62,16 @@ public class MainActivity3 extends AppCompatActivity {
             }
         });
 
-        // Добавляем слушателя для обработки добавления новых кодов в базу данных
-        mDatabase.child("codes").addChildEventListener(new ChildEventListener() {
+        // Добавляем слушателя для обработки изменений статуса соединения
+        mDatabase.child("status").child("connectionStatus").addValueEventListener(new ValueEventListener() {
             @Override
-            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, String prevChildKey) {
-                String newCode = dataSnapshot.getValue(String.class);
-                String enteredCode = codeEditText.getText().toString();
-                if (enteredCode.equals(newCode)) {
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                String status = dataSnapshot.getValue(String.class);
+                if ("Connected".equals(status)) {
                     logTextView.append("Connected\n");
                     switchToMainActivity4();
                 }
             }
-
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, String prevChildKey) {}
-
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {}
-
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, String prevChildKey) {}
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {}
@@ -128,7 +104,18 @@ public class MainActivity3 extends AppCompatActivity {
                 }
                 if (connected) {
                     logTextView.append("Connected\n");
-                    switchToMainActivity4();
+                    mDatabase.child("status").child("connectionStatus").setValue("Connected")
+                            .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    if (task.isSuccessful()) {
+                                        // Успешно записано, удаляем статус
+                                        mDatabase.child("status").removeValue();
+                                    } else {
+                                        Log.w(TAG, "Failed to set connection status", task.getException());
+                                    }
+                                }
+                            });
                 } else {
                     logTextView.append("Incorrect code\n");
                 }

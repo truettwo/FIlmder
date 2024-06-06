@@ -101,7 +101,7 @@ public class MainActivity4 extends AppCompatActivity {
     }
 
     private void fetchComedyMovies() {
-        omdbApi.searchMovies(apiKey, "comedy").enqueue(new Callback<MovieResponse>() {
+        omdbApi.searchMovies(apiKey, "hero").enqueue(new Callback<MovieResponse>() {
             @Override
             public void onResponse(Call<MovieResponse> call, Response<MovieResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
