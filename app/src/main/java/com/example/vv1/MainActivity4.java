@@ -6,16 +6,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-
+import java.util.UUID;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -23,16 +23,19 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import timber.log.Timber;
 
+
 public class MainActivity4 extends AppCompatActivity {
     private ImageView imageView;
     private TextView titleView, descriptionView, ratingView;
     private Button buttonNo, buttonYes, buttonThatsIt;
     private List<Movie> movies;
-    private List<Movie> likedMovies;
-    private Set<Movie> dislikedMovies;
+    private List<String> likedMovies;
+    private Set<String> dislikedMovies;
     private int currentIndex = 0;
     private OMDbApi omdbApi;
     private String apiKey = "50fcb30e"; // ваш реальный API-ключ
+    private FirebaseHelper firebaseHelper;
+    private String userId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +55,8 @@ public class MainActivity4 extends AppCompatActivity {
 
         likedMovies = new ArrayList<>();
         dislikedMovies = new HashSet<>();
+        userId = UUID.randomUUID().toString(); // Уникальный идентификатор пользователя
+        firebaseHelper = new FirebaseHelper(userId);
 
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://www.omdbapi.com/")
@@ -64,15 +69,39 @@ public class MainActivity4 extends AppCompatActivity {
         buttonNo.setEnabled(false);
         buttonYes.setEnabled(false);
 
-        fetchPopularMovies();
+        fetchComedyMovies();
 
         buttonNo.setOnClickListener(v -> onDislike());
         buttonYes.setOnClickListener(v -> onLike());
         buttonThatsIt.setOnClickListener(v -> showCurrentMovieDetails());
+
+        // Добавляем слушателя на изменения данных о лайкнутых фильмах
+        firebaseHelper.setMovieMatchListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
+                    if (!userSnapshot.getKey().equals(userId)) {
+                        for (DataSnapshot movieSnapshot : userSnapshot.getChildren()) {
+                            String movieTitle = movieSnapshot.getKey();
+                            Boolean isLiked = movieSnapshot.getValue(Boolean.class);
+                            if (isLiked != null && isLiked && likedMovies.contains(movieTitle)) {
+                                Toast.makeText(MainActivity4.this, "Совпадение: " + movieTitle, Toast.LENGTH_SHORT).show();
+                                firebaseHelper.removeLikedMovie(movieTitle); // Удаляем фильм после совпадения
+                            }
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Timber.e(databaseError.toException(), "Failed to listen for movie matches");
+            }
+        });
     }
 
-    private void fetchPopularMovies() {
-        omdbApi.searchMovies(apiKey, "popular").enqueue(new Callback<MovieResponse>() {
+    private void fetchComedyMovies() {
+        omdbApi.searchMovies(apiKey, "comedy").enqueue(new Callback<MovieResponse>() {
             @Override
             public void onResponse(Call<MovieResponse> call, Response<MovieResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -83,18 +112,18 @@ public class MainActivity4 extends AppCompatActivity {
                         buttonNo.setEnabled(true);
                         buttonYes.setEnabled(true);
                     } else {
-                        showError("No movies found.");
+                        showError("No comedy movies found.");
                     }
                 } else {
                     Timber.e("Response error: %s", response.errorBody());
-                    showError("Failed to fetch movies. Response error.");
+                    showError("Failed to fetch comedy movies. Response error.");
                 }
             }
 
             @Override
             public void onFailure(Call<MovieResponse> call, Throwable t) {
-                Timber.e(t, "Failed to fetch movies");
-                showError("Failed to fetch movies. Network error.");
+                Timber.e(t, "Failed to fetch comedy movies");
+                showError("Failed to fetch comedy movies. Network error.");
             }
         });
     }
@@ -139,7 +168,7 @@ public class MainActivity4 extends AppCompatActivity {
             if (currentIndex >= movies.size()) {
                 currentIndex = 0; // Циклически проходим по списку фильмов
             }
-            if (!dislikedMovies.contains(movies.get(currentIndex))) {
+            if (!dislikedMovies.contains(movies.get(currentIndex).getTitle())) {
                 showMovie(movies.get(currentIndex));
             } else {
                 showNextMovie();
@@ -151,51 +180,54 @@ public class MainActivity4 extends AppCompatActivity {
 
     private void onLike() {
         if (movies != null && !movies.isEmpty()) {
-            likedMovies.add(movies.get(currentIndex)); // Добавляем понравившийся фильм в список
-            recommendMovies(); // Пробуем показать рекомендованные фильмы
+            String likedMovieTitle = movies.get(currentIndex).getTitle();
+            likedMovies.add(likedMovieTitle); // Добавляем понравившийся фильм в список
+            firebaseHelper.addLikedMovie(likedMovieTitle);
+            checkForMatch(likedMovieTitle);
         }
+    }
+
+    private void checkForMatch(String movieTitle) {
+        firebaseHelper.checkForMatch(movieTitle, new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                boolean matchFound = false;
+                for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
+                    if (!userSnapshot.getKey().equals(userId)) {
+                        for (DataSnapshot movieSnapshot : userSnapshot.getChildren()) {
+                            if (movieTitle.equals(movieSnapshot.getKey())) {
+                                matchFound = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (matchFound) {
+                    Toast.makeText(MainActivity4.this, "Совпадение: " + movieTitle, Toast.LENGTH_SHORT).show();
+                    firebaseHelper.removeLikedMovie(movieTitle);
+                }
+                showNextMovie();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Timber.e(databaseError.toException(), "Failed to check for movie match");
+                showNextMovie();
+            }
+        });
     }
 
     private void onDislike() {
         if (movies != null && !movies.isEmpty()) {
-            dislikedMovies.add(movies.get(currentIndex)); // Добавляем не понравившийся фильм в список
+            String dislikedMovieTitle = movies.get(currentIndex).getTitle();
+            dislikedMovies.add(dislikedMovieTitle);
             showNextMovie();
-        }
-    }
-
-    private void recommendMovies() {
-        if (!likedMovies.isEmpty()) {
-            // Создаем список для хранения рекомендованных фильмов
-            List<Movie> recommendedMovies = new ArrayList<>();
-
-            for (Movie likedMovie : likedMovies) {
-                // Например, добавляем фильмы того же года, что и понравившийся фильм
-                String likedYear = likedMovie.getYear();
-                for (Movie movie : movies) {
-                    if (!likedMovies.contains(movie) && !dislikedMovies.contains(movie) && movie.getYear().equals(likedYear)) {
-                        recommendedMovies.add(movie);
-                    }
-                }
-            }
-
-            // Если рекомендованных фильмов достаточно, перемешаем их и покажем
-            if (!recommendedMovies.isEmpty()) {
-                movies = recommendedMovies;
-                currentIndex = 0;
-                showMovie(movies.get(currentIndex));
-            } else {
-                showError("No recommendations available.");
-                showNextMovie(); // Покажем следующий случайный фильм, если нет рекомендаций
-            }
-        } else {
-            showNextMovie(); // Покажем следующий случайный фильм, если нет понравившихся
         }
     }
 
     private void showCurrentMovieDetails() {
         if (movies != null && !movies.isEmpty()) {
             Movie currentMovie = movies.get(currentIndex);
-            Toast.makeText(this, "You selected: " + currentMovie.getTitle(), Toast.LENGTH_SHORT).show();
             // Implement what happens when the user clicks "Это!!!"
             // For example, navigate to a new activity with detailed information
         }
