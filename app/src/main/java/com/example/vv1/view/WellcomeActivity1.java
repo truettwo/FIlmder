@@ -1,10 +1,13 @@
-package com.example.vv1;
+package com.example.vv1.view;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MotionEvent;
+
+import com.example.vv1.R;
+import com.example.vv1.view.LoginActivity;
 
 public class WellcomeActivity1 extends AppCompatActivity {
 
@@ -17,7 +20,7 @@ public class WellcomeActivity1 extends AppCompatActivity {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            Intent intent = new Intent(this,LoginActivity .class);
+            Intent intent = new Intent(this, LoginActivity.class);
             startActivity(intent);
             return true;
         }

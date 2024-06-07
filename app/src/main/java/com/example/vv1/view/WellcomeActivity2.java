@@ -1,8 +1,10 @@
-package com.example.vv1;
+package com.example.vv1.view;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+
+import com.example.vv1.R;
 
 public class WellcomeActivity2 extends AppCompatActivity {
 

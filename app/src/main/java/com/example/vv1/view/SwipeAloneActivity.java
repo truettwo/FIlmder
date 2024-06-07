@@ -1,17 +1,19 @@
-package com.example.vv1;
+package com.example.vv1.view;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.os.Bundle;
 import android.os.Bundle;
 import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.vv1.controller.MovieArrayAdapter;
+import com.example.vv1.R;
+import com.example.vv1.model.Movie;
+import com.example.vv1.model.MovieDetails;
+import com.example.vv1.model.MovieResponse;
+import com.example.vv1.model.OMDbApi;
 import com.lorentzos.flingswipe.SwipeFlingAdapterView;
-import com.squareup.picasso.Picasso;
+
 import java.util.List;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -21,7 +23,6 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import timber.log.Timber;
 
 import java.util.ArrayList;
-import java.util.List;
 
 
 public class SwipeAloneActivity extends AppCompatActivity {

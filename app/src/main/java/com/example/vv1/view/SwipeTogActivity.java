@@ -1,4 +1,4 @@
-package com.example.vv1;
+package com.example.vv1.view;
 
 import android.os.Bundle;
 import android.widget.Button;
@@ -6,6 +6,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.vv1.R;
+import com.example.vv1.model.FirebaseHelper;
+import com.example.vv1.model.Movie;
+import com.example.vv1.model.MovieDetails;
+import com.example.vv1.model.MovieResponse;
+import com.example.vv1.model.OMDbApi;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;

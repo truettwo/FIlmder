@@ -1,4 +1,4 @@
-package com.example.vv1;
+package com.example.vv1.model;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 

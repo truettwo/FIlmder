@@ -1,15 +1,15 @@
-package com.example.vv1;
+package com.example.vv1.view;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 
 import android.content.Intent;
-import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.vv1.R;
 
 public class SignupActivity extends AppCompatActivity {
 

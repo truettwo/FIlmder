@@ -1,4 +1,4 @@
-package com.example.vv1;
+package com.example.vv1.model;
 
 import retrofit2.Call;
 import retrofit2.http.GET;

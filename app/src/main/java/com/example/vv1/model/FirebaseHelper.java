@@ -1,4 +1,4 @@
-package com.example.vv1;
+package com.example.vv1.model;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
