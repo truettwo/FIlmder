@@ -23,6 +23,7 @@ import timber.log.Timber;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class SwipeAloneActivity extends AppCompatActivity {
 
     private SwipeFlingAdapterView swipeView;
@@ -63,13 +64,11 @@ public class SwipeAloneActivity extends AppCompatActivity {
 
             @Override
             public void onLeftCardExit(Object dataObject) {
-                Toast.makeText(SwipeAloneActivity.this, "No", Toast.LENGTH_SHORT).show();
                 showNextMovie();
             }
 
             @Override
             public void onRightCardExit(Object dataObject) {
-                Toast.makeText(SwipeAloneActivity.this, "Yes", Toast.LENGTH_SHORT).show();
                 showNextMovie();
             }
 
@@ -89,15 +88,19 @@ public class SwipeAloneActivity extends AppCompatActivity {
 
     private void fetchMovies() {
         // Список популярных фильмов
-        String[] popularMovies = {"The Dark Knight"};
+        String[] popularMovies = {"hero"};
 
         for (String movieTitle : popularMovies) {
             omdbApi.searchMovies(apiKey, movieTitle).enqueue(new Callback<MovieResponse>() {
                 @Override
                 public void onResponse(Call<MovieResponse> call, Response<MovieResponse> response) {
                     if (response.isSuccessful() && response.body() != null) {
-                        movies.addAll(response.body().getSearch());
-                        if (!movies.isEmpty()) {
+                        List<Movie> fetchedMovies = response.body().getSearch();
+                        if (fetchedMovies != null && !fetchedMovies.isEmpty()) {
+                            movies.addAll(fetchedMovies);
+                            for (Movie movie : movies) {
+                                fetchMovieDetails(movie);
+                            }
                             movieAdapter.notifyDataSetChanged();
                         } else {
                             showError("No movies found.");
@@ -117,30 +120,33 @@ public class SwipeAloneActivity extends AppCompatActivity {
         }
     }
 
+    private void fetchMovieDetails(Movie movie) {
+        omdbApi.getMovieDetails(apiKey, movie.getImdbID()).enqueue(new Callback<MovieDetails>() {
+            @Override
+            public void onResponse(Call<MovieDetails> call, Response<MovieDetails> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    MovieDetails movieDetails = response.body();
+                    movie.setDescription(movieDetails.getPlot());
+                    movie.setRating(getImdbRating(movieDetails.getRatings()));
+                    movieAdapter.notifyDataSetChanged();
+                } else {
+                    Timber.e("Response error: %s", response.errorBody());
+                    showError("Failed to fetch movie details. Response error.");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<MovieDetails> call, Throwable t) {
+                Timber.e(t, "Failed to fetch movie details");
+                showError("Failed to fetch movie details. Network error.");
+            }
+        });
+    }
+
     private void showNextMovie() {
         if (!movies.isEmpty()) {
-            Movie movie = movies.get(0);
-            omdbApi.getMovieDetails(apiKey, movie.getImdbID()).enqueue(new Callback<MovieDetails>() {
-                @Override
-                public void onResponse(Call<MovieDetails> call, Response<MovieDetails> response) {
-                    if (response.isSuccessful() && response.body() != null) {
-                        MovieDetails movieDetails = response.body();
-                        movie.setTitle(movieDetails.getTitle());
-                        movie.setDescription(movieDetails.getPlot());
-                        movie.setPoster(movieDetails.getPoster());
-                        movieAdapter.notifyDataSetChanged();
-                    } else {
-                        Timber.e("Response error: %s", response.errorBody());
-                        showError("Failed to fetch movie details. Response error.");
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<MovieDetails> call, Throwable t) {
-                    Timber.e(t, "Failed to fetch movie details");
-                    showError("Failed to fetch movie details. Network error.");
-                }
-            });
+            movies.remove(0);
+            movieAdapter.notifyDataSetChanged();
         } else {
             showError("No more movies to show.");
         }
@@ -157,5 +163,14 @@ public class SwipeAloneActivity extends AppCompatActivity {
 
     private void showError(String message) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+    }
+
+    private String getImdbRating(List<MovieDetails.Rating> ratings) {
+        for (MovieDetails.Rating rating : ratings) {
+            if ("Internet Movie Database".equals(rating.getSource())) {
+                return rating.getValue();
+            }
+        }
+        return "N/A";
     }
 }

@@ -16,8 +16,13 @@ import java.util.List;
 
 public class MovieArrayAdapter extends ArrayAdapter<Movie> {
 
+    private Context context;
+    private List<Movie> movies;
+
     public MovieArrayAdapter(Context context, List<Movie> movies) {
-        super(context, 0, movies);
+        super(context, R.layout.item_movie, movies);
+        this.context = context;
+        this.movies = movies;
     }
 
     @Override
@@ -25,7 +30,7 @@ public class MovieArrayAdapter extends ArrayAdapter<Movie> {
         Movie movie = getItem(position);
 
         if (convertView == null) {
-            convertView = LayoutInflater.from(getContext()).inflate(R.layout.item_movie, parent, false);
+            convertView = LayoutInflater.from(context).inflate(R.layout.item_movie, parent, false);
         }
 
         ImageView imageView = convertView.findViewById(R.id.image);
@@ -34,8 +39,9 @@ public class MovieArrayAdapter extends ArrayAdapter<Movie> {
         TextView ratingView = convertView.findViewById(R.id.rating);
 
         titleView.setText(movie.getTitle());
-        descriptionView.setText(movie.getYear()); // Assuming you want to show the year as description
-        ratingView.setText("N/A"); // Placeholder as no rating is in the Movie class
+        descriptionView.setText(movie.getDescription() != null ? movie.getDescription() : "No description available");
+        ratingView.setText(movie.getRating() != null ? movie.getRating() : "N/A");
+
         Picasso.get().load(movie.getPoster()).into(imageView);
 
         return convertView;
