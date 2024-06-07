@@ -98,6 +98,7 @@ dependencies {
     implementation ("com.jakewharton.timber:timber:5.0.1")
     implementation("com.lorentzos.swipecards:library:1.0.9")
 
+
     implementation ("com.squareup.okhttp3:logging-interceptor:4.9.1")
     
 

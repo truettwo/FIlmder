@@ -36,7 +36,7 @@ public class SignupActivity extends AppCompatActivity {
         });
 
         loginTextView.setOnClickListener(v -> {
-            // Handle login navigation here
+
             Intent intent = new Intent(SignupActivity.this, LoginActivity.class);
             startActivity(intent);
         });

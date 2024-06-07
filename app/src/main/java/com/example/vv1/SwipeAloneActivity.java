@@ -9,6 +9,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.lorentzos.flingswipe.SwipeFlingAdapterView;
 import com.squareup.picasso.Picasso;
 import java.util.List;
 import retrofit2.Call;
@@ -18,28 +20,25 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import timber.log.Timber;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SwipeAloneActivity extends AppCompatActivity {
 
-    private ImageView imageView;
-    private TextView titleView, descriptionView, ratingView;
-    private Button buttonNo, buttonYes, buttonThatsIt;
+    private SwipeFlingAdapterView swipeView;
+    private MovieArrayAdapter movieAdapter;
     private List<Movie> movies;
-    private int currentIndex = 0;
     private OMDbApi omdbApi;
     private String apiKey = "50fcb30e"; // ваш реальный API-ключ
+
+    private Button buttonNo, buttonYes, buttonThatsIt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_swipe_alone);
 
-        // Инициализация Timber
-
-
-        imageView = findViewById(R.id.image);
-        titleView = findViewById(R.id.title);
-        descriptionView = findViewById(R.id.description);
-        ratingView = findViewById(R.id.rating);
+        swipeView = findViewById(R.id.swipe_view);
         buttonNo = findViewById(R.id.button_no);
         buttonYes = findViewById(R.id.button_yes);
         buttonThatsIt = findViewById(R.id.button_thats_it);
@@ -51,15 +50,41 @@ public class SwipeAloneActivity extends AppCompatActivity {
 
         omdbApi = retrofit.create(OMDbApi.class);
 
-        // Disable buttons initially
-        buttonNo.setEnabled(false);
-        buttonYes.setEnabled(false);
+        movies = new ArrayList<>();
+        movieAdapter = new MovieArrayAdapter(this, movies);
+        swipeView.setAdapter(movieAdapter);
+
+        swipeView.setFlingListener(new SwipeFlingAdapterView.onFlingListener() {
+            @Override
+            public void removeFirstObjectInAdapter() {
+                movies.remove(0);
+                movieAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onLeftCardExit(Object dataObject) {
+                Toast.makeText(SwipeAloneActivity.this, "No", Toast.LENGTH_SHORT).show();
+                showNextMovie();
+            }
+
+            @Override
+            public void onRightCardExit(Object dataObject) {
+                Toast.makeText(SwipeAloneActivity.this, "Yes", Toast.LENGTH_SHORT).show();
+                showNextMovie();
+            }
+
+            @Override
+            public void onAdapterAboutToEmpty(int itemsInAdapter) {}
+
+            @Override
+            public void onScroll(float scrollProgressPercent) {}
+        });
+
+        buttonNo.setOnClickListener(v -> swipeView.getTopCardListener().selectLeft());
+        buttonYes.setOnClickListener(v -> swipeView.getTopCardListener().selectRight());
+        buttonThatsIt.setOnClickListener(v -> showCurrentMovieDetails());
 
         fetchMovies();
-
-        buttonNo.setOnClickListener(v -> showNextMovie());
-        buttonYes.setOnClickListener(v -> showNextMovie());
-        buttonThatsIt.setOnClickListener(v -> showCurrentMovieDetails());
     }
 
     private void fetchMovies() {
@@ -71,12 +96,9 @@ public class SwipeAloneActivity extends AppCompatActivity {
                 @Override
                 public void onResponse(Call<MovieResponse> call, Response<MovieResponse> response) {
                     if (response.isSuccessful() && response.body() != null) {
-                        movies = response.body().getSearch();
-                        if (movies != null && !movies.isEmpty()) {
-                            showMovie(movies.get(currentIndex));
-                            // Enable buttons after movies are loaded
-                            buttonNo.setEnabled(true);
-                            buttonYes.setEnabled(true);
+                        movies.addAll(response.body().getSearch());
+                        if (!movies.isEmpty()) {
+                            movieAdapter.notifyDataSetChanged();
                         } else {
                             showError("No movies found.");
                         }
@@ -95,52 +117,38 @@ public class SwipeAloneActivity extends AppCompatActivity {
         }
     }
 
-    private void showMovie(Movie movie) {
-        omdbApi.getMovieDetails(apiKey, movie.getImdbID()).enqueue(new Callback<MovieDetails>() {
-            @Override
-            public void onResponse(Call<MovieDetails> call, Response<MovieDetails> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    MovieDetails movieDetails = response.body();
-                    titleView.setText(movieDetails.getTitle());
-                    descriptionView.setText(movieDetails.getPlot());
-                    String imdbRating = getImdbRating(movieDetails.getRatings());
-                    ratingView.setText(imdbRating.isEmpty() ? "N/A" : imdbRating);
-                    Picasso.get().load(movieDetails.getPoster()).into(imageView);
-                } else {
-                    Timber.e("Response error: %s", response.errorBody());
-                    showError("Failed to fetch movie details. Response error.");
-                }
-            }
-
-            @Override
-            public void onFailure(Call<MovieDetails> call, Throwable t) {
-                Timber.e(t, "Failed to fetch movie details");
-                showError("Failed to fetch movie details. Network error.");
-            }
-        });
-    }
-
-    private String getImdbRating(List<MovieDetails.Rating> ratings) {
-        for (MovieDetails.Rating rating : ratings) {
-            if ("Internet Movie Database".equals(rating.getSource())) {
-                return rating.getValue();
-            }
-        }
-        return "";
-    }
-
     private void showNextMovie() {
-        if (movies != null && !movies.isEmpty() && currentIndex < movies.size() - 1) {
-            currentIndex++;
-            showMovie(movies.get(currentIndex));
+        if (!movies.isEmpty()) {
+            Movie movie = movies.get(0);
+            omdbApi.getMovieDetails(apiKey, movie.getImdbID()).enqueue(new Callback<MovieDetails>() {
+                @Override
+                public void onResponse(Call<MovieDetails> call, Response<MovieDetails> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        MovieDetails movieDetails = response.body();
+                        movie.setTitle(movieDetails.getTitle());
+                        movie.setDescription(movieDetails.getPlot());
+                        movie.setPoster(movieDetails.getPoster());
+                        movieAdapter.notifyDataSetChanged();
+                    } else {
+                        Timber.e("Response error: %s", response.errorBody());
+                        showError("Failed to fetch movie details. Response error.");
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<MovieDetails> call, Throwable t) {
+                    Timber.e(t, "Failed to fetch movie details");
+                    showError("Failed to fetch movie details. Network error.");
+                }
+            });
         } else {
             showError("No more movies to show.");
         }
     }
 
     private void showCurrentMovieDetails() {
-        if (movies != null && !movies.isEmpty()) {
-            Movie currentMovie = movies.get(currentIndex);
+        if (!movies.isEmpty()) {
+            Movie currentMovie = movies.get(0);
             Toast.makeText(this, "You selected: " + currentMovie.getTitle(), Toast.LENGTH_SHORT).show();
             // Implement what happens when the user clicks "Это!!!"
             // For example, navigate to a new activity with detailed information
