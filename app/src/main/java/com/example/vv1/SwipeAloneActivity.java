@@ -63,32 +63,36 @@ public class SwipeAloneActivity extends AppCompatActivity {
     }
 
     private void fetchMovies() {
-        // OMDb API does not provide a popular movies endpoint, so we'll use a search query
-        omdbApi.searchMovies(apiKey, "hero").enqueue(new Callback<MovieResponse>() {
-            @Override
-            public void onResponse(Call<MovieResponse> call, Response<MovieResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    movies = response.body().getSearch();
-                    if (movies != null && !movies.isEmpty()) {
-                        showMovie(movies.get(currentIndex));
-                        // Enable buttons after movies are loaded
-                        buttonNo.setEnabled(true);
-                        buttonYes.setEnabled(true);
-                    } else {
-                        showError("No movies found.");
-                    }
-                } else {
-                    Timber.e("Response error: %s", response.errorBody());
-                    showError("Failed to fetch movies. Response error.");
-                }
-            }
+        // Список популярных фильмов
+        String[] popularMovies = {"The Shawshank Redemption", "The Godfather", "The Dark Knight", "Pulp Fiction"};
 
-            @Override
-            public void onFailure(Call<MovieResponse> call, Throwable t) {
-                Timber.e(t, "Failed to fetch movies");
-                showError("Failed to fetch movies. Network error.");
-            }
-        });
+        for (String movieTitle : popularMovies) {
+            omdbApi.searchMovies(apiKey, movieTitle).enqueue(new Callback<MovieResponse>() {
+                @Override
+                public void onResponse(Call<MovieResponse> call, Response<MovieResponse> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        movies = response.body().getSearch();
+                        if (movies != null && !movies.isEmpty()) {
+                            showMovie(movies.get(currentIndex));
+                            // Enable buttons after movies are loaded
+                            buttonNo.setEnabled(true);
+                            buttonYes.setEnabled(true);
+                        } else {
+                            showError("No movies found.");
+                        }
+                    } else {
+                        Timber.e("Response error: %s", response.errorBody());
+                        showError("Failed to fetch movies. Response error.");
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<MovieResponse> call, Throwable t) {
+                    Timber.e(t, "Failed to fetch movies");
+                    showError("Failed to fetch movies. Network error.");
+                }
+            });
+        }
     }
 
     private void showMovie(Movie movie) {
