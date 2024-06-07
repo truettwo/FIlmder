@@ -26,7 +26,7 @@ import timber.log.Timber;
 public class SwipeTogActivity extends AppCompatActivity {
     private ImageView imageView;
     private TextView titleView, descriptionView, ratingView;
-    private Button buttonNo, buttonYes, buttonThatsIt;
+    private Button buttonNo, buttonYes;
     private List<Movie> movies;
     private List<String> likedMovies;
     private Set<String> dislikedMovies;
@@ -50,7 +50,7 @@ public class SwipeTogActivity extends AppCompatActivity {
         ratingView = findViewById(R.id.rating);
         buttonNo = findViewById(R.id.button_no);
         buttonYes = findViewById(R.id.button_yes);
-        buttonThatsIt = findViewById(R.id.button_thats_it);
+
 
         likedMovies = new ArrayList<>();
         dislikedMovies = new HashSet<>();
@@ -72,7 +72,7 @@ public class SwipeTogActivity extends AppCompatActivity {
 
         buttonNo.setOnClickListener(v -> onDislike());
         buttonYes.setOnClickListener(v -> onLike());
-        buttonThatsIt.setOnClickListener(v -> showCurrentMovieDetails());
+
 
         // Добавляем слушателя на изменения данных о лайкнутых фильмах
         firebaseHelper.setMovieMatchListener(new ValueEventListener() {

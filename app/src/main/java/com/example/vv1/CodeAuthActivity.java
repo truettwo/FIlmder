@@ -58,7 +58,7 @@ public class CodeAuthActivity extends AppCompatActivity {
         watchAloneButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                switchToMainActivity4();
+                switchToActSwipeAct();
             }
         });
 
@@ -130,6 +130,10 @@ public class CodeAuthActivity extends AppCompatActivity {
 
     private void switchToMainActivity4() {
         Intent intent = new Intent(CodeAuthActivity.this, SwipeTogActivity.class);
+        startActivity(intent);
+    }
+    private void switchToActSwipeAct() {
+        Intent intent = new Intent(CodeAuthActivity.this, SwipeAloneActivity.class);
         startActivity(intent);
     }
 }
