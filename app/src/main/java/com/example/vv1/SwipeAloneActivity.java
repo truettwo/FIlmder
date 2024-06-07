@@ -64,7 +64,7 @@ public class SwipeAloneActivity extends AppCompatActivity {
 
     private void fetchMovies() {
         // Список популярных фильмов
-        String[] popularMovies = {"The Shawshank Redemption", "The Godfather", "The Dark Knight", "Pulp Fiction"};
+        String[] popularMovies = {"The Dark Knight"};
 
         for (String movieTitle : popularMovies) {
             omdbApi.searchMovies(apiKey, movieTitle).enqueue(new Callback<MovieResponse>() {
