@@ -18,18 +18,18 @@
 
 
         <activity
-            android:name=".MainActivity4"
+            android:name=".SwipeTogActivity"
             android:exported="false"
             android:label="@string/title_activity_main4"
             android:theme="@style/Theme.VV1" />
         <activity
-            android:name=".MainActivity3"
+            android:name=".CodeAuthActivity"
             android:exported="false" />
         <activity
-            android:name=".MainActivity2"
+            android:name=".WellcomeActivity2"
             android:exported="false" />
         <activity
-            android:name=".MainActivity"
+            android:name=".WellcomeActivity1"
             android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

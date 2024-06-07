@@ -21,7 +21,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.Random;
 
-public class MainActivity3 extends AppCompatActivity {
+public class CodeAuthActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     private DatabaseReference mDatabase;
@@ -31,7 +31,7 @@ public class MainActivity3 extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main3);
+        setContentView(R.layout.activity_codeauth);
 
         mDatabase = FirebaseDatabase.getInstance().getReference();
 
@@ -129,7 +129,7 @@ public class MainActivity3 extends AppCompatActivity {
     }
 
     private void switchToMainActivity4() {
-        Intent intent = new Intent(MainActivity3.this, MainActivity4.class);
+        Intent intent = new Intent(CodeAuthActivity.this, SwipeTogActivity.class);
         startActivity(intent);
     }
 }

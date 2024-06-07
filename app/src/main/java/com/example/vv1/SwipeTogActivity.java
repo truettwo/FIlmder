@@ -13,7 +13,6 @@ import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import retrofit2.Call;
@@ -24,7 +23,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import timber.log.Timber;
 
 
-public class MainActivity4 extends AppCompatActivity {
+public class SwipeTogActivity extends AppCompatActivity {
     private ImageView imageView;
     private TextView titleView, descriptionView, ratingView;
     private Button buttonNo, buttonYes, buttonThatsIt;
@@ -40,7 +39,7 @@ public class MainActivity4 extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main4);
+        setContentView(R.layout.activity_swipetog);
 
         // Инициализация Timber
 
@@ -85,7 +84,7 @@ public class MainActivity4 extends AppCompatActivity {
                             String movieTitle = movieSnapshot.getKey();
                             Boolean isLiked = movieSnapshot.getValue(Boolean.class);
                             if (isLiked != null && isLiked && likedMovies.contains(movieTitle)) {
-                                Toast.makeText(MainActivity4.this, "Совпадение: " + movieTitle, Toast.LENGTH_SHORT).show();
+                                Toast.makeText(SwipeTogActivity.this, "Совпадение: " + movieTitle, Toast.LENGTH_SHORT).show();
                                 firebaseHelper.removeLikedMovie(movieTitle); // Удаляем фильм после совпадения
                             }
                         }
@@ -203,7 +202,7 @@ public class MainActivity4 extends AppCompatActivity {
                     }
                 }
                 if (matchFound) {
-                    Toast.makeText(MainActivity4.this, "Совпадение: " + movieTitle, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SwipeTogActivity.this, "Совпадение: " + movieTitle, Toast.LENGTH_SHORT).show();
                     firebaseHelper.removeLikedMovie(movieTitle);
                 }
                 showNextMovie();
