@@ -24,7 +24,6 @@ import timber.log.Timber;
 
 import java.util.ArrayList;
 
-
 public class SwipeAloneActivity extends AppCompatActivity {
 
     private SwipeFlingAdapterView swipeView;
@@ -59,18 +58,20 @@ public class SwipeAloneActivity extends AppCompatActivity {
         swipeView.setFlingListener(new SwipeFlingAdapterView.onFlingListener() {
             @Override
             public void removeFirstObjectInAdapter() {
-                movies.remove(0);
-                movieAdapter.notifyDataSetChanged();
+                if (!movies.isEmpty()) {
+                    movies.remove(0);
+                    movieAdapter.notifyDataSetChanged();
+                }
             }
 
             @Override
             public void onLeftCardExit(Object dataObject) {
-                showNextMovie();
+                // Никаких вызовов удаления здесь
             }
 
             @Override
             public void onRightCardExit(Object dataObject) {
-                showNextMovie();
+                // Никаких вызовов удаления здесь
             }
 
             @Override
@@ -98,11 +99,12 @@ public class SwipeAloneActivity extends AppCompatActivity {
                     if (response.isSuccessful() && response.body() != null) {
                         List<Movie> fetchedMovies = response.body().getSearch();
                         if (fetchedMovies != null && !fetchedMovies.isEmpty()) {
+                            // Сначала добавляем фильмы в список
                             movies.addAll(fetchedMovies);
-                            for (Movie movie : movies) {
+                            // Затем запрашиваем детали каждого фильма
+                            for (Movie movie : fetchedMovies) {
                                 fetchMovieDetails(movie);
                             }
-                            movieAdapter.notifyDataSetChanged();
                         } else {
                             showError("No movies found.");
                         }
@@ -142,15 +144,6 @@ public class SwipeAloneActivity extends AppCompatActivity {
                 showError("Failed to fetch movie details. Network error.");
             }
         });
-    }
-
-    private void showNextMovie() {
-        if (!movies.isEmpty()) {
-            movies.remove(0);
-            movieAdapter.notifyDataSetChanged();
-        } else {
-            showError("No more movies to show.");
-        }
     }
 
     private void showCurrentMovieDetails() {
