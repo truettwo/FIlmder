@@ -20,7 +20,7 @@ public class WellcomeActivity1 extends AppCompatActivity {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            Intent intent = new Intent(this, LoginActivity.class);
+            Intent intent = new Intent(this,SwipeTogetherActivity.class);
             startActivity(intent);
             return true;
         }

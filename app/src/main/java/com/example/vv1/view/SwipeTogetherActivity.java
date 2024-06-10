@@ -8,6 +8,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.vv1.R;
+import com.example.vv1.controller.MovieArrayAdapter;
 import com.example.vv1.model.FirebaseHelper;
 import com.example.vv1.model.Movie;
 import com.example.vv1.model.MovieDetails;
@@ -16,6 +17,7 @@ import com.example.vv1.model.OMDbApi;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
+import com.lorentzos.flingswipe.SwipeFlingAdapterView;
 import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -30,39 +32,30 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import timber.log.Timber;
 
 
-public class SwipeTogActivity extends AppCompatActivity {
-    private ImageView imageView;
-    private TextView titleView, descriptionView, ratingView;
-    private Button buttonNo, buttonYes;
+public class SwipeTogetherActivity extends AppCompatActivity {
+    private FirebaseHelper firebaseHelper;
+    private SwipeFlingAdapterView swipeView;
+    private MovieArrayAdapter movieAdapter;
     private List<Movie> movies;
     private List<String> likedMovies;
-    private Set<String> dislikedMovies;
-    private int currentIndex = 0;
+    private String userId;
     private OMDbApi omdbApi;
     private String apiKey = "50fcb30e"; // ваш реальный API-ключ
-    private FirebaseHelper firebaseHelper;
-    private String userId;
+
+    private Button buttonNo, buttonYes, buttonThatsIt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_swipetog);
+        setContentView(R.layout.activity_swipe_together);
 
-        // Инициализация Timber
-
-
-        imageView = findViewById(R.id.image);
-        titleView = findViewById(R.id.title);
-        descriptionView = findViewById(R.id.description);
-        ratingView = findViewById(R.id.rating);
-        buttonNo = findViewById(R.id.button_no);
-        buttonYes = findViewById(R.id.button_yes);
-
-
-        likedMovies = new ArrayList<>();
-        dislikedMovies = new HashSet<>();
         userId = UUID.randomUUID().toString(); // Уникальный идентификатор пользователя
         firebaseHelper = new FirebaseHelper(userId);
+
+        swipeView = findViewById(R.id.swipe_view1);
+        buttonNo = findViewById(R.id.button_no);
+        buttonYes = findViewById(R.id.button_yes);
+        buttonThatsIt = findViewById(R.id.button_thats_it);
 
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://www.omdbapi.com/")
@@ -71,15 +64,46 @@ public class SwipeTogActivity extends AppCompatActivity {
 
         omdbApi = retrofit.create(OMDbApi.class);
 
-        // Disable buttons initially
-        buttonNo.setEnabled(false);
-        buttonYes.setEnabled(false);
+        movies = new ArrayList<>();
+        likedMovies = new ArrayList<>();
+        movieAdapter = new MovieArrayAdapter(this, movies);
+        swipeView.setAdapter(movieAdapter);
 
-        fetchComedyMovies();
+        swipeView.setFlingListener(new SwipeFlingAdapterView.onFlingListener() {
+            @Override
+            public void removeFirstObjectInAdapter() {
+                if (!movies.isEmpty()) {
+                    movies.remove(0);
+                    movieAdapter.notifyDataSetChanged();
+                }
+            }
 
-        buttonNo.setOnClickListener(v -> onDislike());
-        buttonYes.setOnClickListener(v -> onLike());
+            @Override
+            public void onLeftCardExit(Object dataObject) {
+                // Никаких вызовов удаления здесь
+            }
 
+            @Override
+            public void onRightCardExit(Object dataObject) {
+                Movie likedMovie = (Movie) dataObject;
+                String likedMovieTitle = likedMovie.getTitle();
+                likedMovies.add(likedMovieTitle); // Добавляем понравившийся фильм в список
+                firebaseHelper.addLikedMovie(likedMovieTitle);
+                checkForMatch(likedMovieTitle);
+            }
+
+            @Override
+            public void onAdapterAboutToEmpty(int itemsInAdapter) {}
+
+            @Override
+            public void onScroll(float scrollProgressPercent) {}
+        });
+
+        buttonNo.setOnClickListener(v -> swipeView.getTopCardListener().selectLeft());
+        buttonYes.setOnClickListener(v -> swipeView.getTopCardListener().selectRight());
+        buttonThatsIt.setOnClickListener(v -> showCurrentMovieDetails());
+
+        fetchMovies();
 
         // Добавляем слушателя на изменения данных о лайкнутых фильмах
         firebaseHelper.setMovieMatchListener(new ValueEventListener() {
@@ -91,7 +115,7 @@ public class SwipeTogActivity extends AppCompatActivity {
                             String movieTitle = movieSnapshot.getKey();
                             Boolean isLiked = movieSnapshot.getValue(Boolean.class);
                             if (isLiked != null && isLiked && likedMovies.contains(movieTitle)) {
-                                Toast.makeText(SwipeTogActivity.this, "Совпадение: " + movieTitle, Toast.LENGTH_SHORT).show();
+                                Toast.makeText(SwipeTogetherActivity.this, "Совпадение: " + movieTitle, Toast.LENGTH_SHORT).show();
                                 firebaseHelper.removeLikedMovie(movieTitle); // Удаляем фильм после совпадения
                             }
                         }
@@ -106,45 +130,50 @@ public class SwipeTogActivity extends AppCompatActivity {
         });
     }
 
-    private void fetchComedyMovies() {
-        omdbApi.searchMovies(apiKey, "hero").enqueue(new Callback<MovieResponse>() {
-            @Override
-            public void onResponse(Call<MovieResponse> call, Response<MovieResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    movies = response.body().getSearch();
-                    if (movies != null && !movies.isEmpty()) {
-                        showMovie(movies.get(currentIndex));
-                        // Enable buttons after movies are loaded
-                        buttonNo.setEnabled(true);
-                        buttonYes.setEnabled(true);
-                    } else {
-                        showError("No comedy movies found.");
-                    }
-                } else {
-                    Timber.e("Response error: %s", response.errorBody());
-                    showError("Failed to fetch comedy movies. Response error.");
-                }
-            }
+    private void fetchMovies() {
+        // Список популярных фильмов
+        String[] popularMovies = {"hero"};
 
-            @Override
-            public void onFailure(Call<MovieResponse> call, Throwable t) {
-                Timber.e(t, "Failed to fetch comedy movies");
-                showError("Failed to fetch comedy movies. Network error.");
-            }
-        });
+        for (String movieTitle : popularMovies) {
+            omdbApi.searchMovies(apiKey, movieTitle).enqueue(new Callback<MovieResponse>() {
+                @Override
+                public void onResponse(Call<MovieResponse> call, Response<MovieResponse> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        List<Movie> fetchedMovies = response.body().getSearch();
+                        if (fetchedMovies != null && !fetchedMovies.isEmpty()) {
+                            // Сначала добавляем фильмы в список
+                            movies.addAll(fetchedMovies);
+                            // Затем запрашиваем детали каждого фильма
+                            for (Movie movie : fetchedMovies) {
+                                fetchMovieDetails(movie);
+                            }
+                        } else {
+                            showError("No movies found.");
+                        }
+                    } else {
+                        Timber.e("Response error: %s", response.errorBody());
+                        showError("Failed to fetch movies. Response error.");
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<MovieResponse> call, Throwable t) {
+                    Timber.e(t, "Failed to fetch movies");
+                    showError("Failed to fetch movies. Network error.");
+                }
+            });
+        }
     }
 
-    private void showMovie(Movie movie) {
+    private void fetchMovieDetails(Movie movie) {
         omdbApi.getMovieDetails(apiKey, movie.getImdbID()).enqueue(new Callback<MovieDetails>() {
             @Override
             public void onResponse(Call<MovieDetails> call, Response<MovieDetails> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     MovieDetails movieDetails = response.body();
-                    titleView.setText(movieDetails.getTitle());
-                    descriptionView.setText(movieDetails.getPlot());
-                    String imdbRating = getImdbRating(movieDetails.getRatings());
-                    ratingView.setText(imdbRating.isEmpty() ? "N/A" : imdbRating);
-                    Picasso.get().load(movieDetails.getPoster()).into(imageView);
+                    movie.setDescription(movieDetails.getPlot());
+                    movie.setRating(getImdbRating(movieDetails.getRatings()));
+                    movieAdapter.notifyDataSetChanged();
                 } else {
                     Timber.e("Response error: %s", response.errorBody());
                     showError("Failed to fetch movie details. Response error.");
@@ -159,40 +188,6 @@ public class SwipeTogActivity extends AppCompatActivity {
         });
     }
 
-    private String getImdbRating(List<MovieDetails.Rating> ratings) {
-        for (MovieDetails.Rating rating : ratings) {
-            if ("Internet Movie Database".equals(rating.getSource())) {
-                return rating.getValue();
-            }
-        }
-        return "";
-    }
-
-    private void showNextMovie() {
-        if (movies != null && !movies.isEmpty()) {
-            currentIndex++;
-            if (currentIndex >= movies.size()) {
-                currentIndex = 0; // Циклически проходим по списку фильмов
-            }
-            if (!dislikedMovies.contains(movies.get(currentIndex).getTitle())) {
-                showMovie(movies.get(currentIndex));
-            } else {
-                showNextMovie();
-            }
-        } else {
-            showError("No more movies to show.");
-        }
-    }
-
-    private void onLike() {
-        if (movies != null && !movies.isEmpty()) {
-            String likedMovieTitle = movies.get(currentIndex).getTitle();
-            likedMovies.add(likedMovieTitle); // Добавляем понравившийся фильм в список
-            firebaseHelper.addLikedMovie(likedMovieTitle);
-            checkForMatch(likedMovieTitle);
-        }
-    }
-
     private void checkForMatch(String movieTitle) {
         firebaseHelper.checkForMatch(movieTitle, new ValueEventListener() {
             @Override
@@ -200,7 +195,8 @@ public class SwipeTogActivity extends AppCompatActivity {
                 boolean matchFound = false;
                 for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
                     if (!userSnapshot.getKey().equals(userId)) {
-                        for (DataSnapshot movieSnapshot : userSnapshot.getChildren()) {
+                        for (DataSnapshot movieSnapshot :
+                                userSnapshot.getChildren()) {
                             if (movieTitle.equals(movieSnapshot.getKey())) {
                                 matchFound = true;
                                 break;
@@ -209,31 +205,22 @@ public class SwipeTogActivity extends AppCompatActivity {
                     }
                 }
                 if (matchFound) {
-                    Toast.makeText(SwipeTogActivity.this, "Совпадение: " + movieTitle, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SwipeTogetherActivity.this, "Совпадение: " + movieTitle, Toast.LENGTH_SHORT).show();
                     firebaseHelper.removeLikedMovie(movieTitle);
                 }
-                showNextMovie();
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 Timber.e(databaseError.toException(), "Failed to check for movie match");
-                showNextMovie();
             }
         });
     }
 
-    private void onDislike() {
-        if (movies != null && !movies.isEmpty()) {
-            String dislikedMovieTitle = movies.get(currentIndex).getTitle();
-            dislikedMovies.add(dislikedMovieTitle);
-            showNextMovie();
-        }
-    }
-
     private void showCurrentMovieDetails() {
-        if (movies != null && !movies.isEmpty()) {
-            Movie currentMovie = movies.get(currentIndex);
+        if (!movies.isEmpty()) {
+            Movie currentMovie = movies.get(0);
+            Toast.makeText(this, "You selected: " + currentMovie.getTitle(), Toast.LENGTH_SHORT).show();
             // Implement what happens when the user clicks "Это!!!"
             // For example, navigate to a new activity with detailed information
         }
@@ -241,5 +228,14 @@ public class SwipeTogActivity extends AppCompatActivity {
 
     private void showError(String message) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+    }
+
+    private String getImdbRating(List<MovieDetails.Rating> ratings) {
+        for (MovieDetails.Rating rating : ratings) {
+            if ("Internet Movie Database".equals(rating.getSource())) {
+                return rating.getValue();
+            }
+        }
+        return "N/A";
     }
 }

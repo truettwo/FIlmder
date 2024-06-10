@@ -130,7 +130,7 @@ public class CodeAuthActivity extends AppCompatActivity {
     }
 
     private void switchToMainActivity4() {
-        Intent intent = new Intent(CodeAuthActivity.this, SwipeTogActivity.class);
+        Intent intent = new Intent(CodeAuthActivity.this, SwipeTogetherActivity.class);
         startActivity(intent);
     }
     private void switchToActSwipeAct() {
