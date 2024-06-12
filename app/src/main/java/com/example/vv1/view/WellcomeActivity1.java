@@ -1,24 +1,26 @@
-package com.example.vv1;
+package com.example.vv1.view;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MotionEvent;
-import androidx.appcompat.app.AppCompatActivity;
 
-public class MainActivity extends AppCompatActivity {
+import com.example.vv1.R;
+import com.example.vv1.view.LoginActivity;
+
+public class WellcomeActivity1 extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_welcome1);
 
     }
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            Intent intent = new Intent(this, MainActivity3.class);
+            Intent intent = new Intent(this,SwipeTogetherActivity.class);
             startActivity(intent);
             return true;
         }
