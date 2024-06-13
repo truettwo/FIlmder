@@ -3,12 +3,6 @@ package com.example.vv1.model;
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
-
-
-
-import com.google.gson.annotations.SerializedName;
-import java.util.List;
-
 public class Movie {
 
     @SerializedName("Title")
@@ -25,6 +19,12 @@ public class Movie {
 
     private String description;
     private String rating;
+
+    // Новый конструктор
+    public Movie(String title, String imdbID) {
+        this.title = title;
+        this.imdbID = imdbID;
+    }
 
     public String getTitle() {
         return title;
